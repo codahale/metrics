@@ -1,7 +1,29 @@
 // Package metrics provides minimalist instrumentation for your applications in
 // the form of counters and gauges.
 //
-// Measurements from counters and gauges are available as expvars.
+// Counters
+//
+// A counter is a monotonically-increasing, unsigned, 64-bit integer used to
+// represent the number of times an event has occurred. By tracking the deltas
+// between measurements of a counter over intervals of time, an aggregation
+// layer can derive rates, acceleration, etc.
+//
+// Gauges
+//
+// A gauge returns instantaneous measurements of something using 64-bit floating
+// point values.
+//
+// Histograms
+//
+// A histogram tracks the distribution of a stream of values (e.g. the number of
+// milliseconds it takes to handle requests), adding gauges for the values at
+// meaningful quantiles: 50th, 75th, 90th, 95th, 99th, 99.9th.
+//
+// Reporting
+//
+// Measurements from counters and gauges are available as expvars. Your service
+// should return its expvars from an HTTP endpoint (i.e., /debug/vars) as a JSON
+// object.
 package metrics
 
 import (
