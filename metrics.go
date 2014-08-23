@@ -135,12 +135,13 @@ type Histogram struct {
 	rw   sync.RWMutex
 }
 
-// RecordValue records the given value.
-func (h *Histogram) RecordValue(v int64) {
+// RecordValue records the given value, or returns an error if the value is out
+// of range.
+func (h *Histogram) RecordValue(v int64) error {
 	h.rw.Lock()
 	defer h.rw.Unlock()
 
-	h.hist.Current.RecordValue(v)
+	return h.hist.Current.RecordValue(v)
 }
 
 func (h *Histogram) rotate() {
