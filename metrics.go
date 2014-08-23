@@ -75,6 +75,18 @@ func (g Gauge) SetFunc(f func() float64) {
 	gm.Unlock()
 }
 
+// SetBatchFunc sets the gauge's value to the lazily-called return value of the
+// given function, with an additional initializer function for a related batch
+// of gauges.
+func (g Gauge) SetBatchFunc(root string, init func(), f func() float64) {
+	gm.Lock()
+	gauges[string(g)] = f
+	if _, ok := inits[root]; !ok {
+		inits[root] = init
+	}
+	gm.Unlock()
+}
+
 // Reset removes all existing counters and gauges.
 func Reset() {
 	cm.Lock()
@@ -89,7 +101,7 @@ func Reset() {
 	counters = make(map[string]uint64)
 	gauges = make(map[string]func() float64)
 	histograms = make(map[string]*Histogram)
-
+	inits = make(map[string]func())
 }
 
 // Counters returns a snapshot of the current values of all counters.
@@ -112,23 +124,14 @@ func Gauges() map[string]float64 {
 	hm.Lock()
 	defer hm.Unlock()
 
-	// include room for histogram values
-	g := make(map[string]float64, len(gauges)+(len(histograms)*6))
+	for _, init := range inits {
+		init()
+	}
 
+	g := make(map[string]float64, len(gauges))
 	for n, f := range gauges {
 		g[n] = f()
 	}
-
-	for n, h := range histograms {
-		m := h.merge()
-		g[n+".P50"] = float64(m.ValueAtQuantile(50))
-		g[n+".P75"] = float64(m.ValueAtQuantile(75))
-		g[n+".P90"] = float64(m.ValueAtQuantile(90))
-		g[n+".P95"] = float64(m.ValueAtQuantile(95))
-		g[n+".P99"] = float64(m.ValueAtQuantile(99))
-		g[n+".P999"] = float64(m.ValueAtQuantile(99.9))
-	}
-
 	return g
 }
 
@@ -145,15 +148,25 @@ func NewHistogram(name string, minValue, maxValue int64, sigfigs int) *Histogram
 		panic(name + " already exists")
 	}
 
-	histograms[name] = &Histogram{
+	hist := &Histogram{
 		hist: hdr.NewWindowedHistogram(5, minValue, maxValue, sigfigs),
 	}
-	return histograms[name]
+	histograms[name] = hist
+
+	Gauge(name+".P50").SetBatchFunc(name, hist.merge, hist.valueAt(50))
+	Gauge(name+".P75").SetBatchFunc(name, hist.merge, hist.valueAt(75))
+	Gauge(name+".P90").SetBatchFunc(name, hist.merge, hist.valueAt(90))
+	Gauge(name+".P95").SetBatchFunc(name, hist.merge, hist.valueAt(95))
+	Gauge(name+".P99").SetBatchFunc(name, hist.merge, hist.valueAt(99))
+	Gauge(name+".P999").SetBatchFunc(name, hist.merge, hist.valueAt(99.9))
+
+	return hist
 }
 
 // A Histogram measures the distribution of a stream of values.
 type Histogram struct {
 	hist *hdr.WindowedHistogram
+	m    *hdr.Histogram
 	rw   sync.RWMutex
 }
 
@@ -173,24 +186,36 @@ func (h *Histogram) rotate() {
 	h.hist.Rotate()
 }
 
-func (h *Histogram) merge() *hdr.Histogram {
-	h.rw.RLock()
-	defer h.rw.RUnlock()
+func (h *Histogram) merge() {
+	h.rw.Lock()
+	defer h.rw.Unlock()
 
-	return h.hist.Merge()
+	h.m = h.hist.Merge()
+}
+
+func (h *Histogram) valueAt(q float64) func() float64 {
+	return func() float64 {
+		h.rw.RLock()
+		defer h.rw.RUnlock()
+
+		if h.m == nil {
+			return 0
+		}
+
+		return float64(h.m.ValueAtQuantile(q))
+	}
 }
 
 var (
-	counters   map[string]uint64
-	gauges     map[string]func() float64
-	histograms map[string]*Histogram
+	counters   = make(map[string]uint64)
+	gauges     = make(map[string]func() float64)
+	inits      = make(map[string]func())
+	histograms = make(map[string]*Histogram)
 
 	cm, gm, hm sync.Mutex
 )
 
 func init() {
-	Reset()
-
 	expvar.Publish("counters", expvar.Func(func() interface{} {
 		return Counters()
 	}))
@@ -201,11 +226,11 @@ func init() {
 
 	go func() {
 		for _ = range time.NewTicker(1 * time.Minute).C {
-			gm.Lock()
+			hm.Lock()
 			for _, h := range histograms {
 				h.rotate()
 			}
-			gm.Unlock()
+			hm.Unlock()
 		}
 	}()
 }
