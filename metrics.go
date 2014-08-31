@@ -153,15 +153,17 @@ func NewHistogram(name string, minValue, maxValue int64, sigfigs int) *Histogram
 	}
 	histograms[name] = hist
 
-	Gauge(name+".P50").SetBatchFunc(name, hist.merge, hist.valueAt(50))
-	Gauge(name+".P75").SetBatchFunc(name, hist.merge, hist.valueAt(75))
-	Gauge(name+".P90").SetBatchFunc(name, hist.merge, hist.valueAt(90))
-	Gauge(name+".P95").SetBatchFunc(name, hist.merge, hist.valueAt(95))
-	Gauge(name+".P99").SetBatchFunc(name, hist.merge, hist.valueAt(99))
-	Gauge(name+".P999").SetBatchFunc(name, hist.merge, hist.valueAt(99.9))
+	Gauge(name+".P50").SetBatchFunc(hname(name), hist.merge, hist.valueAt(50))
+	Gauge(name+".P75").SetBatchFunc(hname(name), hist.merge, hist.valueAt(75))
+	Gauge(name+".P90").SetBatchFunc(hname(name), hist.merge, hist.valueAt(90))
+	Gauge(name+".P95").SetBatchFunc(hname(name), hist.merge, hist.valueAt(95))
+	Gauge(name+".P99").SetBatchFunc(hname(name), hist.merge, hist.valueAt(99))
+	Gauge(name+".P999").SetBatchFunc(hname(name), hist.merge, hist.valueAt(99.9))
 
 	return hist
 }
+
+type hname string // unexported to prevent collisions
 
 // A Histogram measures the distribution of a stream of values.
 type Histogram struct {
