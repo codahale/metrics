@@ -12,7 +12,7 @@ func TestCounter(t *testing.T) {
 	metrics.Counter("whee").Add()
 	metrics.Counter("whee").AddN(10)
 
-	counters := metrics.Counters()
+	counters, _ := metrics.Snapshot()
 	if v, want := counters["whee"], uint64(11); v != want {
 		t.Errorf("Counter was %v, but expected %v", v, want)
 	}
@@ -23,7 +23,7 @@ func TestGaugeValue(t *testing.T) {
 
 	metrics.Gauge("whee").Set(100.01)
 
-	gauges := metrics.Gauges()
+	_, gauges := metrics.Snapshot()
 	if v, want := gauges["whee"], 100.01; v != want {
 		t.Errorf("Gauge was %v, but expected %v", v, want)
 	}
@@ -36,7 +36,7 @@ func TestGaugeFunc(t *testing.T) {
 		return 100.03
 	})
 
-	gauges := metrics.Gauges()
+	_, gauges := metrics.Snapshot()
 	if v, want := gauges["whee"], 100.03; v != want {
 		t.Errorf("Gauge was %v, but expected %v", v, want)
 	}
@@ -52,7 +52,7 @@ func TestHistogram(t *testing.T) {
 		}
 	}
 
-	gauges := metrics.Gauges()
+	_, gauges := metrics.Snapshot()
 
 	if v, want := gauges["heyo.P50"], 71.0; v != want {
 		t.Errorf("P50 was %v, but expected %v", v, want)

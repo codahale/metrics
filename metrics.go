@@ -104,20 +104,11 @@ func Reset() {
 	inits = make(map[interface{}]func())
 }
 
-// Counters returns a snapshot of the current values of all counters.
-func Counters() map[string]uint64 {
+// Snapshot returns a copy of the values of all registered counters and gauges.
+func Snapshot() (c map[string]uint64, g map[string]float64) {
 	cm.Lock()
 	defer cm.Unlock()
 
-	c := make(map[string]uint64, len(counters))
-	for n, v := range counters {
-		c[n] = v
-	}
-	return c
-}
-
-// Gauges returns a snapshot of the current values of all gauges.
-func Gauges() map[string]float64 {
 	gm.Lock()
 	defer gm.Unlock()
 
@@ -128,11 +119,17 @@ func Gauges() map[string]float64 {
 		init()
 	}
 
-	g := make(map[string]float64, len(gauges))
+	c = make(map[string]uint64, len(counters))
+	for n, v := range counters {
+		c[n] = v
+	}
+
+	g = make(map[string]float64, len(gauges))
 	for n, f := range gauges {
 		g[n] = f()
 	}
-	return g
+
+	return
 }
 
 // NewHistogram returns a windowed HDR histogram which drops data older than
@@ -218,12 +215,12 @@ var (
 )
 
 func init() {
-	expvar.Publish("counters", expvar.Func(func() interface{} {
-		return Counters()
-	}))
-
-	expvar.Publish("gauges", expvar.Func(func() interface{} {
-		return Gauges()
+	expvar.Publish("metrics", expvar.Func(func() interface{} {
+		counters, gauges := Snapshot()
+		return map[string]interface{}{
+			"Counters": counters,
+			"Gauges":   gauges,
+		}
 	}))
 
 	go func() {
