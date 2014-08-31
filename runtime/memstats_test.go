@@ -7,17 +7,26 @@ import (
 )
 
 func TestMemStats(t *testing.T) {
-	_, gauges := metrics.Snapshot()
+	counters, gauges := metrics.Snapshot()
 
-	expected := []string{
+	expectedCounters := []string{
 		"Mem.NumGC",
 		"Mem.PauseTotalNs",
+	}
+
+	expectedGauges := []string{
 		"Mem.LastGC",
 		"Mem.Alloc",
 		"Mem.HeapObjects",
 	}
 
-	for _, name := range expected {
+	for _, name := range expectedCounters {
+		if _, ok := counters[name]; !ok {
+			t.Errorf("Missing counters %q", name)
+		}
+	}
+
+	for _, name := range expectedGauges {
 		if _, ok := gauges[name]; !ok {
 			t.Errorf("Missing gauge %q", name)
 		}

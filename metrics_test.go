@@ -18,6 +18,54 @@ func TestCounter(t *testing.T) {
 	}
 }
 
+func TestCounterFunc(t *testing.T) {
+	metrics.Reset()
+
+	metrics.Counter("whee").SetFunc(func() uint64 {
+		return 100
+	})
+
+	counters, _ := metrics.Snapshot()
+	if v, want := counters["whee"], uint64(100); v != want {
+		t.Errorf("Counter was %v, but expected %v", v, want)
+	}
+}
+
+func TestCounterBatchFunc(t *testing.T) {
+	metrics.Reset()
+
+	var a, b uint64
+
+	metrics.Counter("whee").SetBatchFunc(
+		"yay",
+		func() {
+			a, b = 1, 2
+		},
+		func() uint64 {
+			return a
+		},
+	)
+
+	metrics.Counter("woo").SetBatchFunc(
+		"yay",
+		func() {
+			a, b = 1, 2
+		},
+		func() uint64 {
+			return b
+		},
+	)
+
+	counters, _ := metrics.Snapshot()
+	if v, want := counters["whee"], uint64(1); v != want {
+		t.Errorf("Counter was %v, but expected %v", v, want)
+	}
+
+	if v, want := counters["woo"], uint64(2); v != want {
+		t.Errorf("Counter was %v, but expected %v", v, want)
+	}
+}
+
 func TestGaugeValue(t *testing.T) {
 	metrics.Reset()
 

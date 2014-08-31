@@ -9,8 +9,9 @@ import (
 func init() {
 	msg := &memStatGauges{}
 
-	metrics.Gauge("Mem.NumGC").SetBatchFunc(key{}, msg.init, msg.numGC)
-	metrics.Gauge("Mem.PauseTotalNs").SetBatchFunc(key{}, msg.init, msg.totalPause)
+	metrics.Counter("Mem.NumGC").SetBatchFunc(key{}, msg.init, msg.numGC)
+	metrics.Counter("Mem.PauseTotalNs").SetBatchFunc(key{}, msg.init, msg.totalPause)
+
 	metrics.Gauge("Mem.LastGC").SetBatchFunc(key{}, msg.init, msg.lastPause)
 	metrics.Gauge("Mem.Alloc").SetBatchFunc(key{}, msg.init, msg.alloc)
 	metrics.Gauge("Mem.HeapObjects").SetBatchFunc(key{}, msg.init, msg.objects)
@@ -26,12 +27,12 @@ func (msg *memStatGauges) init() {
 	runtime.ReadMemStats(&msg.stats)
 }
 
-func (msg *memStatGauges) numGC() float64 {
-	return float64(msg.stats.NumGC)
+func (msg *memStatGauges) numGC() uint64 {
+	return uint64(msg.stats.NumGC)
 }
 
-func (msg *memStatGauges) totalPause() float64 {
-	return float64(msg.stats.PauseTotalNs)
+func (msg *memStatGauges) totalPause() uint64 {
+	return msg.stats.PauseTotalNs
 }
 
 func (msg *memStatGauges) lastPause() float64 {

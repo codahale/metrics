@@ -52,6 +52,31 @@ func (c Counter) AddN(delta uint64) {
 	cm.Unlock()
 }
 
+// SetFunc sets the counter's value to the lazily-called return value of the
+// given function.
+func (c Counter) SetFunc(f func() uint64) {
+	cm.Lock()
+	defer cm.Unlock()
+
+	counterFuncs[string(c)] = f
+}
+
+// SetBatchFunc sets the counter's value to the lazily-called return value of
+// the given function, with an additional initializer function for a related
+// batch of counters, all of which are keyed by an arbitrary value.
+func (c Counter) SetBatchFunc(key interface{}, init func(), f func() uint64) {
+	cm.Lock()
+	defer cm.Unlock()
+
+	gm.Lock()
+	defer gm.Unlock()
+
+	counterFuncs[string(c)] = f
+	if _, ok := inits[key]; !ok {
+		inits[key] = init
+	}
+}
+
 // A Gauge is an instantaneous measurement of a value.
 //
 // Use a gauge to track metrics which increase and decrease (e.g., amount of
@@ -99,6 +124,7 @@ func Reset() {
 	defer hm.Unlock()
 
 	counters = make(map[string]uint64)
+	counterFuncs = make(map[string]func() uint64)
 	gauges = make(map[string]func() float64)
 	histograms = make(map[string]*Histogram)
 	inits = make(map[interface{}]func())
@@ -119,9 +145,13 @@ func Snapshot() (c map[string]uint64, g map[string]float64) {
 		init()
 	}
 
-	c = make(map[string]uint64, len(counters))
+	c = make(map[string]uint64, len(counters)+len(counterFuncs))
 	for n, v := range counters {
 		c[n] = v
+	}
+
+	for n, f := range counterFuncs {
+		c[n] = f()
 	}
 
 	g = make(map[string]float64, len(gauges))
@@ -206,10 +236,11 @@ func (h *Histogram) valueAt(q float64) func() float64 {
 }
 
 var (
-	counters   = make(map[string]uint64)
-	gauges     = make(map[string]func() float64)
-	inits      = make(map[interface{}]func())
-	histograms = make(map[string]*Histogram)
+	counters     = make(map[string]uint64)
+	counterFuncs = make(map[string]func() uint64)
+	gauges       = make(map[string]func() float64)
+	inits        = make(map[interface{}]func())
+	histograms   = make(map[string]*Histogram)
 
 	cm, gm, hm sync.Mutex
 )
