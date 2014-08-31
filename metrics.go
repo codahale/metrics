@@ -163,7 +163,7 @@ func Snapshot() (c map[string]uint64, g map[string]float64) {
 }
 
 // NewHistogram returns a windowed HDR histogram which drops data older than
-// five minutes.
+// five minutes. The returned histogram is safe to use from multiple goroutines.
 //
 // Use a histogram to track the distribution of a stream of values (e.g., the
 // latency associated with HTTP requests).
