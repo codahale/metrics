@@ -9,11 +9,11 @@ import (
 func init() {
 	msg := &memStatGauges{}
 
-	metrics.Gauge("Mem.GC.Runs").SetBatchFunc("Mem", msg.init, msg.numGC)
-	metrics.Gauge("Mem.GC.TotalPauseTime").SetBatchFunc("Mem", msg.init, msg.totalPause)
-	metrics.Gauge("Mem.GC.LastPauseTime").SetBatchFunc("Mem", msg.init, msg.lastPause)
+	metrics.Gauge("Mem.NumGC").SetBatchFunc("Mem", msg.init, msg.numGC)
+	metrics.Gauge("Mem.PauseTotalNs").SetBatchFunc("Mem", msg.init, msg.totalPause)
+	metrics.Gauge("Mem.LastGC").SetBatchFunc("Mem", msg.init, msg.lastPause)
 	metrics.Gauge("Mem.Alloc").SetBatchFunc("Mem", msg.init, msg.alloc)
-	metrics.Gauge("Mem.Objects").SetBatchFunc("Mem", msg.init, msg.objects)
+	metrics.Gauge("Mem.HeapObjects").SetBatchFunc("Mem", msg.init, msg.objects)
 }
 
 type memStatGauges struct {
