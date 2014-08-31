@@ -86,18 +86,20 @@ type Gauge string
 // Set the gauge's value to the given value.
 func (g Gauge) Set(value float64) {
 	gm.Lock()
+	defer gm.Unlock()
+
 	gauges[string(g)] = func() float64 {
 		return value
 	}
-	gm.Unlock()
 }
 
 // SetFunc sets the gauge's value to the lazily-called return value of the given
 // function.
 func (g Gauge) SetFunc(f func() float64) {
 	gm.Lock()
+	defer gm.Unlock()
+
 	gauges[string(g)] = f
-	gm.Unlock()
 }
 
 // SetBatchFunc sets the gauge's value to the lazily-called return value of the
@@ -105,11 +107,12 @@ func (g Gauge) SetFunc(f func() float64) {
 // of gauges, all of which are keyed by an arbitrary value.
 func (g Gauge) SetBatchFunc(key interface{}, init func(), f func() float64) {
 	gm.Lock()
+	defer gm.Unlock()
+
 	gauges[string(g)] = f
 	if _, ok := inits[key]; !ok {
 		inits[key] = init
 	}
-	gm.Unlock()
 }
 
 // Reset removes all existing counters and gauges.
