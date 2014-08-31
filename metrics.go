@@ -77,12 +77,12 @@ func (g Gauge) SetFunc(f func() float64) {
 
 // SetBatchFunc sets the gauge's value to the lazily-called return value of the
 // given function, with an additional initializer function for a related batch
-// of gauges.
-func (g Gauge) SetBatchFunc(root string, init func(), f func() float64) {
+// of gauges, all of which are keyed by an arbitrary value.
+func (g Gauge) SetBatchFunc(key interface{}, init func(), f func() float64) {
 	gm.Lock()
 	gauges[string(g)] = f
-	if _, ok := inits[root]; !ok {
-		inits[root] = init
+	if _, ok := inits[key]; !ok {
+		inits[key] = init
 	}
 	gm.Unlock()
 }
@@ -101,7 +101,7 @@ func Reset() {
 	counters = make(map[string]uint64)
 	gauges = make(map[string]func() float64)
 	histograms = make(map[string]*Histogram)
-	inits = make(map[string]func())
+	inits = make(map[interface{}]func())
 }
 
 // Counters returns a snapshot of the current values of all counters.
@@ -209,7 +209,7 @@ func (h *Histogram) valueAt(q float64) func() float64 {
 var (
 	counters   = make(map[string]uint64)
 	gauges     = make(map[string]func() float64)
-	inits      = make(map[string]func())
+	inits      = make(map[interface{}]func())
 	histograms = make(map[string]*Histogram)
 
 	cm, gm, hm sync.Mutex

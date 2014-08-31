@@ -9,12 +9,14 @@ import (
 func init() {
 	msg := &memStatGauges{}
 
-	metrics.Gauge("Mem.NumGC").SetBatchFunc("Mem", msg.init, msg.numGC)
-	metrics.Gauge("Mem.PauseTotalNs").SetBatchFunc("Mem", msg.init, msg.totalPause)
-	metrics.Gauge("Mem.LastGC").SetBatchFunc("Mem", msg.init, msg.lastPause)
-	metrics.Gauge("Mem.Alloc").SetBatchFunc("Mem", msg.init, msg.alloc)
-	metrics.Gauge("Mem.HeapObjects").SetBatchFunc("Mem", msg.init, msg.objects)
+	metrics.Gauge("Mem.NumGC").SetBatchFunc(key{}, msg.init, msg.numGC)
+	metrics.Gauge("Mem.PauseTotalNs").SetBatchFunc(key{}, msg.init, msg.totalPause)
+	metrics.Gauge("Mem.LastGC").SetBatchFunc(key{}, msg.init, msg.lastPause)
+	metrics.Gauge("Mem.Alloc").SetBatchFunc(key{}, msg.init, msg.alloc)
+	metrics.Gauge("Mem.HeapObjects").SetBatchFunc(key{}, msg.init, msg.objects)
 }
+
+type key struct{} // unexported to prevent collision
 
 type memStatGauges struct {
 	stats runtime.MemStats
