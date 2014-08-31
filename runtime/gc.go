@@ -17,11 +17,11 @@ func init() {
 }
 
 type memStatGauges struct {
-	stats *runtime.MemStats
+	stats runtime.MemStats
 }
 
 func (msg *memStatGauges) init() {
-	runtime.ReadMemStats(msg.stats)
+	runtime.ReadMemStats(&msg.stats)
 }
 
 func (msg *memStatGauges) numGC() float64 {
