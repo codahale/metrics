@@ -35,14 +35,14 @@ func (msg *memStatGauges) totalPause() uint64 {
 	return msg.stats.PauseTotalNs
 }
 
-func (msg *memStatGauges) lastPause() float64 {
-	return float64(msg.stats.LastGC)
+func (msg *memStatGauges) lastPause() int64 {
+	return int64(msg.stats.LastGC)
 }
 
-func (msg *memStatGauges) alloc() float64 {
-	return float64(msg.stats.Alloc)
+func (msg *memStatGauges) alloc() int64 {
+	return int64(msg.stats.Alloc)
 }
 
-func (msg *memStatGauges) objects() float64 {
-	return float64(msg.stats.HeapObjects)
+func (msg *memStatGauges) objects() int64 {
+	return int64(msg.stats.HeapObjects)
 }

@@ -10,8 +10,8 @@
 //
 // Gauges
 //
-// A gauge returns instantaneous measurements of something using 64-bit floating
-// point values.
+// A gauge returns instantaneous measurements of something using signed, 64-bit
+// integers. This value does not need to be monotonic.
 //
 // Histograms
 //
@@ -84,18 +84,18 @@ func (c Counter) SetBatchFunc(key interface{}, init func(), f func() uint64) {
 type Gauge string
 
 // Set the gauge's value to the given value.
-func (g Gauge) Set(value float64) {
+func (g Gauge) Set(value int64) {
 	gm.Lock()
 	defer gm.Unlock()
 
-	gauges[string(g)] = func() float64 {
+	gauges[string(g)] = func() int64 {
 		return value
 	}
 }
 
 // SetFunc sets the gauge's value to the lazily-called return value of the given
 // function.
-func (g Gauge) SetFunc(f func() float64) {
+func (g Gauge) SetFunc(f func() int64) {
 	gm.Lock()
 	defer gm.Unlock()
 
@@ -105,7 +105,7 @@ func (g Gauge) SetFunc(f func() float64) {
 // SetBatchFunc sets the gauge's value to the lazily-called return value of the
 // given function, with an additional initializer function for a related batch
 // of gauges, all of which are keyed by an arbitrary value.
-func (g Gauge) SetBatchFunc(key interface{}, init func(), f func() float64) {
+func (g Gauge) SetBatchFunc(key interface{}, init func(), f func() int64) {
 	gm.Lock()
 	defer gm.Unlock()
 
@@ -128,13 +128,13 @@ func Reset() {
 
 	counters = make(map[string]uint64)
 	counterFuncs = make(map[string]func() uint64)
-	gauges = make(map[string]func() float64)
+	gauges = make(map[string]func() int64)
 	histograms = make(map[string]*Histogram)
 	inits = make(map[interface{}]func())
 }
 
 // Snapshot returns a copy of the values of all registered counters and gauges.
-func Snapshot() (c map[string]uint64, g map[string]float64) {
+func Snapshot() (c map[string]uint64, g map[string]int64) {
 	cm.Lock()
 	defer cm.Unlock()
 
@@ -157,7 +157,7 @@ func Snapshot() (c map[string]uint64, g map[string]float64) {
 		c[n] = f()
 	}
 
-	g = make(map[string]float64, len(gauges))
+	g = make(map[string]int64, len(gauges))
 	for n, f := range gauges {
 		g[n] = f()
 	}
@@ -225,8 +225,8 @@ func (h *Histogram) merge() {
 	h.m = h.hist.Merge()
 }
 
-func (h *Histogram) valueAt(q float64) func() float64 {
-	return func() float64 {
+func (h *Histogram) valueAt(q float64) func() int64 {
+	return func() int64 {
 		h.rw.RLock()
 		defer h.rw.RUnlock()
 
@@ -234,14 +234,14 @@ func (h *Histogram) valueAt(q float64) func() float64 {
 			return 0
 		}
 
-		return float64(h.m.ValueAtQuantile(q))
+		return h.m.ValueAtQuantile(q)
 	}
 }
 
 var (
 	counters     = make(map[string]uint64)
 	counterFuncs = make(map[string]func() uint64)
-	gauges       = make(map[string]func() float64)
+	gauges       = make(map[string]func() int64)
 	inits        = make(map[interface{}]func())
 	histograms   = make(map[string]*Histogram)
 

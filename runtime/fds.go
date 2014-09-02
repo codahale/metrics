@@ -24,19 +24,19 @@ func getFDUsage() (uint64, error) {
 }
 
 func init() {
-	metrics.Gauge("FileDescriptors.Max").SetFunc(func() float64 {
+	metrics.Gauge("FileDescriptors.Max").SetFunc(func() int64 {
 		v, err := getFDLimit()
 		if err != nil {
 			return 0
 		}
-		return float64(v)
+		return int64(v)
 	})
 
-	metrics.Gauge("FileDescriptors.Used").SetFunc(func() float64 {
+	metrics.Gauge("FileDescriptors.Used").SetFunc(func() int64 {
 		v, err := getFDUsage()
 		if err != nil {
 			return 0
 		}
-		return float64(v)
+		return int64(v)
 	})
 }

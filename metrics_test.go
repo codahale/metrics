@@ -69,10 +69,10 @@ func TestCounterBatchFunc(t *testing.T) {
 func TestGaugeValue(t *testing.T) {
 	metrics.Reset()
 
-	metrics.Gauge("whee").Set(100.01)
+	metrics.Gauge("whee").Set(-100)
 
 	_, gauges := metrics.Snapshot()
-	if v, want := gauges["whee"], 100.01; v != want {
+	if v, want := gauges["whee"], int64(-100); v != want {
 		t.Errorf("Gauge was %v, but expected %v", v, want)
 	}
 }
@@ -80,12 +80,12 @@ func TestGaugeValue(t *testing.T) {
 func TestGaugeFunc(t *testing.T) {
 	metrics.Reset()
 
-	metrics.Gauge("whee").SetFunc(func() float64 {
-		return 100.03
+	metrics.Gauge("whee").SetFunc(func() int64 {
+		return -100
 	})
 
 	_, gauges := metrics.Snapshot()
-	if v, want := gauges["whee"], 100.03; v != want {
+	if v, want := gauges["whee"], int64(-100); v != want {
 		t.Errorf("Gauge was %v, but expected %v", v, want)
 	}
 }
@@ -102,27 +102,27 @@ func TestHistogram(t *testing.T) {
 
 	_, gauges := metrics.Snapshot()
 
-	if v, want := gauges["heyo.P50"], 71.0; v != want {
+	if v, want := gauges["heyo.P50"], int64(71); v != want {
 		t.Errorf("P50 was %v, but expected %v", v, want)
 	}
 
-	if v, want := gauges["heyo.P75"], 87.0; v != want {
+	if v, want := gauges["heyo.P75"], int64(87); v != want {
 		t.Errorf("P75 was %v, but expected %v", v, want)
 	}
 
-	if v, want := gauges["heyo.P90"], 95.0; v != want {
+	if v, want := gauges["heyo.P90"], int64(95); v != want {
 		t.Errorf("P90 was %v, but expected %v", v, want)
 	}
 
-	if v, want := gauges["heyo.P95"], 98.0; v != want {
+	if v, want := gauges["heyo.P95"], int64(98); v != want {
 		t.Errorf("P95 was %v, but expected %v", v, want)
 	}
 
-	if v, want := gauges["heyo.P99"], 100.0; v != want {
+	if v, want := gauges["heyo.P99"], int64(100); v != want {
 		t.Errorf("P99 was %v, but expected %v", v, want)
 	}
 
-	if v, want := gauges["heyo.P999"], 100.0; v != want {
+	if v, want := gauges["heyo.P999"], int64(100); v != want {
 		t.Errorf("P999 was %v, but expected %v", v, want)
 	}
 }
