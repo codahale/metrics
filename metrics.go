@@ -31,7 +31,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/codahale/hdrhistogram/hdr"
+	"github.com/codahale/hdrhistogram"
 )
 
 // A Counter is a monotonically increasing unsigned integer.
@@ -179,7 +179,7 @@ func NewHistogram(name string, minValue, maxValue int64, sigfigs int) *Histogram
 	}
 
 	hist := &Histogram{
-		hist: hdr.NewWindowedHistogram(5, minValue, maxValue, sigfigs),
+		hist: hdrhistogram.NewWindowed(5, minValue, maxValue, sigfigs),
 	}
 	histograms[name] = hist
 
@@ -197,8 +197,8 @@ type hname string // unexported to prevent collisions
 
 // A Histogram measures the distribution of a stream of values.
 type Histogram struct {
-	hist *hdr.WindowedHistogram
-	m    *hdr.Histogram
+	hist *hdrhistogram.WindowedHistogram
+	m    *hdrhistogram.Histogram
 	rw   sync.RWMutex
 }
 
