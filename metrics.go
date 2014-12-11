@@ -180,6 +180,7 @@ func NewHistogram(name string, minValue, maxValue int64, sigfigs int) *Histogram
 
 	hist := &Histogram{
 		hist: hdrhistogram.NewWindowed(5, minValue, maxValue, sigfigs),
+		name: name,
 	}
 	histograms[name] = hist
 
@@ -200,15 +201,22 @@ type Histogram struct {
 	hist *hdrhistogram.WindowedHistogram
 	m    *hdrhistogram.Histogram
 	rw   sync.RWMutex
+
+	name string
 }
 
 // RecordValue records the given value, or returns an error if the value is out
 // of range.
+// Returned error values are of type Error.
 func (h *Histogram) RecordValue(v int64) error {
 	h.rw.Lock()
 	defer h.rw.Unlock()
 
-	return h.hist.Current.RecordValue(v)
+	err := h.hist.Current.RecordValue(v)
+	if err != nil {
+		return Error{h.name, err}
+	}
+	return nil
 }
 
 func (h *Histogram) rotate() {
@@ -236,6 +244,16 @@ func (h *Histogram) valueAt(q float64) func() int64 {
 
 		return h.m.ValueAtQuantile(q)
 	}
+}
+
+// Error describes an error and the name of the metric where it occurred.
+type Error struct {
+	Metric string
+	Err    error
+}
+
+func (e Error) Error() string {
+	return e.Metric + ": " + e.Err.Error()
 }
 
 var (
