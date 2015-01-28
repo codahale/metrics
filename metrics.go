@@ -203,7 +203,6 @@ func NewHistogram(name string, minValue, maxValue int64, sigfigs int) *Histogram
 	hist := &Histogram{
 		name: name,
 		hist: hdrhistogram.NewWindowed(5, minValue, maxValue, sigfigs),
-		name: name,
 	}
 	histograms[name] = hist
 
@@ -241,8 +240,6 @@ type Histogram struct {
 	hist *hdrhistogram.WindowedHistogram
 	m    *hdrhistogram.Histogram
 	rw   sync.RWMutex
-
-	name string
 }
 
 // RecordValue records the given value, or returns an error if the value is out
