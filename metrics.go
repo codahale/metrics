@@ -242,6 +242,11 @@ type Histogram struct {
 	rw   sync.RWMutex
 }
 
+// Name returns the name of the histogram
+func (h *Histogram) Name() string {
+	return h.name
+}
+
 // RecordValue records the given value, or returns an error if the value is out
 // of range.
 // Returned error values are of type Error.
