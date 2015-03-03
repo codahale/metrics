@@ -14,4 +14,5 @@
 //     Mem.LastGC
 //     Mem.Alloc
 //     Mem.HeapObjects
+//     Goroutines.Num
 package runtime
