@@ -128,7 +128,7 @@ func (g Gauge) SetBatchFunc(key interface{}, init func(), f func() int64) {
 	}
 }
 
-// Remove removes the given counter.
+// Remove removes the given gauge.
 func (g Gauge) Remove() {
 	gm.Lock()
 	defer gm.Unlock()
