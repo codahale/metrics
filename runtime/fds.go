@@ -14,7 +14,7 @@ func getFDLimit() (uint64, error) {
 	if err := syscall.Getrlimit(syscall.RLIMIT_NOFILE, &rlimit); err != nil {
 		return 0, err
 	}
-	return rlimit.Cur, nil
+	return uint64(rlimit.Cur), nil
 }
 
 func getFDUsage() (uint64, error) {
