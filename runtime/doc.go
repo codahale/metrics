@@ -12,6 +12,7 @@
 //     Mem.NumGC
 //     Mem.PauseTotalNs
 //     Mem.LastGC
+//     Mem.NextGC
 //     Mem.Alloc
 //     Mem.HeapObjects
 //     Goroutines.Num
