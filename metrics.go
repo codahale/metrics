@@ -34,6 +34,9 @@ import (
 	"github.com/codahale/hdrhistogram"
 )
 
+// Note - If multiple locks must be concurrently held they should be
+// acquired in this order hm, gm, cm or deadlock will result.
+
 // A Counter is a monotonically increasing unsigned integer.
 //
 // Use a counter to derive rates (e.g., record total number of requests, derive
@@ -65,11 +68,11 @@ func (c Counter) SetFunc(f func() uint64) {
 // the given function, with an additional initializer function for a related
 // batch of counters, all of which are keyed by an arbitrary value.
 func (c Counter) SetBatchFunc(key interface{}, init func(), f func() uint64) {
-	cm.Lock()
-	defer cm.Unlock()
-
 	gm.Lock()
 	defer gm.Unlock()
+
+	cm.Lock()
+	defer cm.Unlock()
 
 	counterFuncs[string(c)] = f
 	if _, ok := inits[key]; !ok {
@@ -79,11 +82,11 @@ func (c Counter) SetBatchFunc(key interface{}, init func(), f func() uint64) {
 
 // Remove removes the given counter.
 func (c Counter) Remove() {
-	cm.Lock()
-	defer cm.Unlock()
-
 	gm.Lock()
 	defer gm.Unlock()
+
+	cm.Lock()
+	defer cm.Unlock()
 
 	delete(counters, string(c))
 	delete(counterFuncs, string(c))
@@ -139,14 +142,14 @@ func (g Gauge) Remove() {
 
 // Reset removes all existing counters and gauges.
 func Reset() {
-	cm.Lock()
-	defer cm.Unlock()
+	hm.Lock()
+	defer hm.Unlock()
 
 	gm.Lock()
 	defer gm.Unlock()
 
-	hm.Lock()
-	defer hm.Unlock()
+	cm.Lock()
+	defer cm.Unlock()
 
 	counters = make(map[string]uint64)
 	counterFuncs = make(map[string]func() uint64)
@@ -157,14 +160,14 @@ func Reset() {
 
 // Snapshot returns a copy of the values of all registered counters and gauges.
 func Snapshot() (c map[string]uint64, g map[string]int64) {
-	cm.Lock()
-	defer cm.Unlock()
+	hm.Lock()
+	defer hm.Unlock()
 
 	gm.Lock()
 	defer gm.Unlock()
 
-	hm.Lock()
-	defer hm.Unlock()
+	cm.Lock()
+	defer cm.Unlock()
 
 	for _, init := range inits {
 		init()
